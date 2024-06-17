@@ -30,5 +30,11 @@ void BCC_MCU_Assert(bool x) {
 bcc_status_t BCC_MCU_TransferTpl(uint8_t drvInstance, uint8_t transBuf[], uint8_t recvBuf[], uint16_t recvTrCnt) {
   BCC_TX_SPI->transfer(transBuf, 5);
   // STUB: figure out SPI slave mode
-  for (uint8_t i = 0; i < recvTrCnt)
+  for (uint8_t i = 0; i < recvTrCnt) {
+    recvBuf[i] = 0;
+    recvBuf[i+1] = 0;
+    recvBuf[i+2] = 0;
+    recvBuf[i+3] = 0;
+    recvBuf[i+4] = 0;
+  }
 }
