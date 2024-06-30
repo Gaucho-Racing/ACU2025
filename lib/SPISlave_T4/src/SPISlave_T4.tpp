@@ -1,6 +1,6 @@
-//#include "SPISlave_T4.h"
-//#include <Arduino.h>
-//#include <SPI.h>
+#include <SPISlave_T4.h>
+#include "Arduino.h"
+#include "SPI.h"
 
 #define SLAVE_CR spiAddr[4]
 #define SLAVE_FCR spiAddr[22]
@@ -14,11 +14,12 @@
 #define SLAVE_PORT_ADDR volatile uint32_t *spiAddr = &(*(volatile uint32_t*)(0x40394000 + (0x4000 * _portnum)))
 #define SLAVE_PINS_ADDR volatile uint32_t *spiAddr = &(*(volatile uint32_t*)(0x401F84EC + (_portnum * 0x10)))
 
- 
-void lpspi4_slave_isr() {
+#ifndef LPSPI4_SLAVE_ISR_DEFINED
+#define LPSPI4_SLAVE_ISR_DEFINED
+inline void lpspi4_slave_isr() {
   _LPSPI4->SLAVE_ISR();
 }
-
+#endif
 
 SPISlave_T4_FUNC SPISlave_T4_OPT::SPISlave_T4() {
   if ( port == &SPI ) {
@@ -123,9 +124,9 @@ SPISlave_T4_FUNC void __attribute__((section(".fustrun"))) SPISlave_T4_OPT::SLAV
 
   if ( SLAVE_SR & (1UL << 11) ) {
     /* transmit error, clear flag, check cabling */
-    SLAVE_SR = (1UL << 11);
-    transmit_errors++;
-  }
+      SLAVE_SR = (1UL << 11);
+      transmit_errors++;
+    }
   if ( (SLAVE_SR & (1UL << 1)) ) {
     spiRx[spiRxIdx] = SLAVE_RDR;
     if (spiRxIdx < 9) spiRxIdx++;

@@ -1,1 +1,0 @@
-// purpose: makes sure functions do what we intended them to do
