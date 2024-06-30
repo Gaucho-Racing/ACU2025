@@ -3,7 +3,7 @@
 #include "config.h"      
 
 bool init_battery_test(Battery *bty){
-    return bty->checkIsAlive();
+    return bty->checkCommunication();
 }
 
 int debug(Battery *bty){
@@ -29,7 +29,7 @@ int debug(Battery *bty){
 int voltage_measurement_test(Battery *bty){
     float_t min_volt = __FLT_MAX__, max_volt = __FLT_MIN__;
     Serial.println("Cell Voltage: --------------------------");
-    for(int i = 0; i < (NUM_TOTAL_IC * NUM_CELL_IC); i++){
+    for(int i = 0; i < (NUM_TOTAL_IC); i++){
         
         Serial.printf("Row %d => ", i);
         for (int j = 0; j < NUM_CELL_IC; j++){
@@ -62,7 +62,7 @@ int voltage_measurement_test(Battery *bty){
 int temperature_measurement_test(Battery *bty){
     float_t min_temp = __FLT_MAX__, max_temp = __FLT_MIN__;
     Serial.println("Cell Temp: ------------------------------");
-    for(int i = 0; i < (NUM_TOTAL_IC * NUM_CELL_IC); i++){
+    for(int i = 0; i < (NUM_TOTAL_IC); i++){
         
         Serial.printf("Row %d => ", i);
         for (int j = 0; j < NUM_CELL_IC; j++){
@@ -72,17 +72,17 @@ int temperature_measurement_test(Battery *bty){
             max_temp = max(max_temp, bty->cellTemp[i]);
 
             if(bty->cellTemp[i] < PRM_CELL_MIN_TEMP){
-                Serial.printf("%5.03f | Under] ", bty->cellTemp[i]);
+                Serial.printf("%5.01f | Under] ", bty->cellTemp[i]);
 
             } else if (bty->cellTemp[i] > PRM_CELL_MAX_TEMP){
-                Serial.printf("%5.03f | Over] ", bty->cellTemp[i]);
+                Serial.printf("%5.01f | Over] ", bty->cellTemp[i]);
             }
             else{
-                Serial.printf("%5.03f] ", bty->cellTemp[i]);
+                Serial.printf("%5.01f] ", bty->cellTemp[i]);
             }
         }
         Serial.println();
-        Serial.printf("Min temp: %5.03f | Max temp: %5.03f\n", min_temp, max_temp);
+        Serial.printf("Min temp: %5.01f | Max temp: %5.01f\n", min_temp, max_temp);
     }
     Serial.println("-----------------------------------------");
     return 1;
@@ -96,7 +96,7 @@ int temperature_measurement_test(Battery *bty){
 int ball_temp_measurement_test(Battery * bty){
     float_t min_temp = __FLT_MAX__, max_temp = __FLT_MIN__;
     Serial.println("Ball Temp: ------------------------------");
-    for(int i = 0; i < (NUM_TOTAL_IC * NUM_CELL_IC); i++){
+    for(int i = 0; i < (NUM_TOTAL_IC); i++){
         
         Serial.printf("Row %d => ", i);
         for (int j = 0; j < NUM_CELL_IC; j++){
@@ -106,17 +106,17 @@ int ball_temp_measurement_test(Battery * bty){
             max_temp = max(max_temp, bty->balTemp[i]);
 
             if(bty->balTemp[i] < PRM_MIN_BALL_TEMP){
-                Serial.printf("%5.03f | Under] ", bty->balTemp[i]);
+                Serial.printf("%5.01f | Under] ", bty->balTemp[i]);
 
             } else if (bty->balTemp[i] > PRM_MAX_BALL_TEMP){
-                Serial.printf("%5.03f | Over] ", bty->balTemp[i]);
+                Serial.printf("%5.01f | Over] ", bty->balTemp[i]);
             }
             else{
-                Serial.printf("%5.03f] ", bty->balTemp[i]);
+                Serial.printf("%5.01f] ", bty->balTemp[i]);
             }
         }
         Serial.println();
-        Serial.printf("Min ball_temp: %5.03f | Max ball_temp: %5.03f\n", min_temp, max_temp);
+        Serial.printf("Min ball_temp: %5.01f | Max ball_temp: %5.01f\n", min_temp, max_temp);
     }
     Serial.println("-----------------------------------------");
     return 1;
