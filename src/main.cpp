@@ -3,6 +3,7 @@
 #include "bcc.h" // Battery Cell Controller (BCC) library
 #include "SPISlave_T4.h" // SPI slave library for Teensy 4
 #include "pins.h" // defining pin configurations
+#include "config.h" // defining configuration values
 
 
 SPIClass* BCC_TX_SPI = &SPI1;
