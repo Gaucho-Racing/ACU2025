@@ -1,21 +1,21 @@
 #include <Arduino.h>
 #include <SPI.h>
-#include "bcc.h"
-#include "SPISlave_T4.h" // hope this thing works
-#include "pins.h"
+#include "bcc.h" // Battery Cell Controller (BCC) library
+#include "SPISlave_T4.h" // SPI slave library for Teensy 4
+#include "pins.h" // defining pin configurations
 
 
 SPIClass* BCC_TX_SPI = &SPI1;
-SPISlave_T4<&SPI, SPI_8_BITS> BCC_RX_SPI;
-uint32_t spiRx[10];
-volatile int spiRxIdx;
-volatile int spiRxComplete = 0;
+SPISlave_T4<&SPI, SPI_8_BITS> BCC_RX_SPI; // 8-bit data mode
+uint32_t spiRx[10]; // Array to store received SPI data.
+volatile int spiRxIdx; //  Index for received SPI data
+volatile int spiRxComplete = 0; // Flag to indicate if SPI reception is complete
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(1000000);
-  BCC_TX_SPI->begin();
-  BCC_RX_SPI.begin();
+  BCC_TX_SPI->begin(); // init SPI bus for transmission
+  BCC_RX_SPI.begin(); // init the SPI bus for reception (slave mode)
 }
 
 void loop() {
@@ -23,14 +23,20 @@ void loop() {
   // put your main code here, to run repeatedly:
 }
 
+/// @brief wait for a number of milliseconds.
+/// @param ms 
 void BCC_MCU_WaitMs(uint16_t ms) {
   delay(ms);
 }
 
+/// @brief wait for a number of microseconds.
+/// @param us 
 void BCC_MCU_WaitUs(uint32_t us) {
   delayMicroseconds(us);
 }
 
+/// @brief Asserts a condition.
+/// @param x 
 void BCC_MCU_Assert(bool x) {
   if (!x) Serial.print("BCC assertion failed\n");
 }
@@ -42,6 +48,12 @@ bcc_status_t BCC_MCU_TransferSpi(uint8_t drvInstance, uint8_t transBuf[], uint8_
   return BCC_STATUS_SUCCESS;
 }
 
+/// @brief SPI transfer in TPL mode: logs transfer instance, transfers data via SPI, waits for reception complete, then logs/stores received data.
+/// @param drvInstance 
+/// @param transBuf 
+/// @param recvBuf 
+/// @param recvTrCnt 
+/// @return status of the operation
 bcc_status_t BCC_MCU_TransferTpl(uint8_t drvInstance, uint8_t transBuf[], uint8_t recvBuf[], uint16_t recvTrCnt) {
   Serial.printf("drvInstance %u transferTpl\n", drvInstance); // what does drvInstance do?
   BCC_TX_SPI->transfer(transBuf, 5);
