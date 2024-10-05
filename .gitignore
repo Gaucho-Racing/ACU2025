@@ -39,3 +39,4 @@
 .vscode/ipch
 .vscode/
 .vscode/settings.json
+.DS_Store

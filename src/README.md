@@ -1,0 +1,88 @@
+enum bcc_status_t (Error Codes)
+{ 
+    BCC_STATUS_SUCCESS = 0U, (means we're good)
+    BCC_STATUS_SPI_INIT = 1U,
+    BCC_STATUS_SPI_BUSY = 2U, 
+    BCC_STATUS_PARAM_RANGE = 4U,
+    BCC_STATUS_CRC = 5U, 
+    BCC_STATUS_COM_TAG_ID = 6U,
+    BCC_STATUS_COM_RC = 7U,
+    BCC_STATUS_COM_TIMEOUT = 8U,
+    BCC_STATUS_DIAG_FAIL = 9U, 
+    BCC_STATUS_EEPROM_ERROR = 10U,
+    BCC_STATUS_EEPROM_PRESENT = 11U, 
+    BCC_STATUS_NULL_RESP = 12U 
+}
+
+enum bcc_cid_t { (Cluster ID addresses) (TPL mode max = 15)
+    BCC_CID_UNASSIG = 0U, 
+    BCC_CID_DEV1 = 1U,
+    BCC_CID_DEV2 = 2U, 
+    BCC_CID_DEV3 = 3U, 
+    BCC_CID_DEV4 = 4U, 
+    BCC_CID_DEV5 =
+    5U, BCC_CID_DEV6 = 6U, 
+    BCC_CID_DEV7 = 7U, 
+    BCC_CID_DEV8 = 8U,
+    BCC_CID_DEV9 = 9U, 
+    BCC_CID_DEV10 = 10U, 
+    BCC_CID_DEV11 = 11U,
+    BCC_CID_DEV12 = 12U, 
+    BCC_CID_DEV13 = 13U, 
+    BCC_CID_DEV14 = 14U,
+    BCC_CID_DEV15 = 15U 
+}
+
+Communication Mode: bcc_mode_t: we're using BCC_MODE_TPL = 0U
+BCC Device: bcc_device_t = BCC_DEVICE_MC33771 = 0U
+
+Measurements provided by Battery Cell Controller:
+bcc_measurements_t {
+    BCC_MSR_CC_NB_SAMPLES = 0U,
+    BCC_MSR_COULOMB_CNT1 = 1U, 
+    BCC_MSR_COULOMB_CNT2 = 2U,
+    BCC_MSR_ISENSE1 = 3U, 
+    BCC_MSR_ISENSE2 = 4U, 
+    BCC_MSR_STACK_VOLT = 5U, (IMPORTANT AND ONWARDS)
+    BCC_MSR_CELL_VOLT14 = 6U, 
+    BCC_MSR_CELL_VOLT13 = 7U,
+    BCC_MSR_CELL_VOLT12 = 8U, 
+    BCC_MSR_CELL_VOLT11 = 9U,
+    BCC_MSR_CELL_VOLT10 = 10U, 
+    BCC_MSR_CELL_VOLT9 = 11U,
+    BCC_MSR_CELL_VOLT8 = 12U, 
+    BCC_MSR_CELL_VOLT7 = 13U,
+    BCC_MSR_CELL_VOLT6 = 14U,
+    BCC_MSR_CELL_VOLT5 = 15U,
+    BCC_MSR_CELL_VOLT4 = 16U, 
+    BCC_MSR_CELL_VOLT3 = 17U,
+    BCC_MSR_CELL_VOLT2 = 18U, 
+    BCC_MSR_CELL_VOLT1 = 19U, 
+    BCC_MSR_AN6 = 20U, 
+    BCC_MSR_AN5 = 21U, 
+    BCC_MSR_AN4 = 22U, 
+    BCC_MSR_AN3 = 23U,
+    BCC_MSR_AN2 = 24U, 
+    BCC_MSR_AN1 = 25U, 
+    BCC_MSR_AN0 = 26U,
+    BCC_MSR_ICTEMP = 27U, 
+    BCC_MSR_VBGADC1A = 28U, 
+    BCC_MSR_VBGADC1B = 29U 
+}
+
+Status from BCC:
+enum bcc_fault_status_t
+{ 
+    BCC_FS_CELL_OV = 0U, 
+    BCC_FS_CELL_UV = 1U, 
+    BCC_FS_CB_OPEN = 2U,
+    BCC_FS_CB_SHORT = 3U, 
+    BCC_FS_GPIO_STATUS = 4U, 
+    BCC_FS_AN_OT_UT = 5U,
+    BCC_FS_GPIO_SHORT = 6U, 
+    BCC_FS_COMM = 7U, 
+    BCC_FS_FAULT1 = 8U,
+    BCC_FS_FAULT2 = 9U, 
+    BCC_FS_FAULT3 = 10U 
+}
+
