@@ -1,12 +1,4 @@
-#include "SPISlave_T4.h"
-#include <Arduino.h>
 #include "mcu_wrapper.h"
-#include "pins.h"
-#include "config.h"
-
-uint8_t transBuf[5];  // Adjust size as per your protocol
-uint8_t recvBuf[RX_BUF_SIZE];
-uint16_t recvTrCnt;
 
 void BCC_MCU_WaitMs(uint16_t delay) {
   delayMicroseconds((uint32_t)(0.001 * delay));

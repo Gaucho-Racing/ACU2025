@@ -1,8 +1,10 @@
-#ifndef MCU_WRAPPER_H
-#define MCU_WRAPPER_H
-#pragma once
-#include "bcc_communication.h"
+#ifndef MCU_H
+#define MCU_H
+#include "SPISlave_T4.h"
+#include "pins.h"
+#include <Arduino.h>
 #include "config.h"
+#include "bcc.h"
 
 extern uint8_t transBuf[5];  // Adjust size as per your protocol
 extern uint8_t recvBuf[RX_BUF_SIZE];

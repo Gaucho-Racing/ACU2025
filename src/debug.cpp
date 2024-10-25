@@ -1,4 +1,5 @@
 #include "Battery.h"
+#include "config.h"
 #include <Arduino.h>
 // Key Test Functions for BCC
 
