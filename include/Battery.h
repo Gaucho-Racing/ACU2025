@@ -72,7 +72,7 @@ public:
     float max_output_current;
 
     bcc_drv_config_t drvConfig;
-    uint32_t cellVoltage[140]; // V
+    uint32_t cellVoltage[140];
     uint32_t stackVoltage[14];
     float cellTemp[14];
     float balTemp[140]; 

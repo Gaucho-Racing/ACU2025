@@ -1,4 +1,7 @@
 #include "Battery.h"
+#include "bcc.h"
+#include "bcc_communication.h"
+#include "bcc_diagnostics.h"
 
 void clear_faults(bcc_drv_config_t * drvConfig)
 {
@@ -45,7 +48,7 @@ void Battery::init(){
     clear_faults(&drvConfig);
 
     // disable cell balancing first
-    toggleCellBalancing(1);
+    toggleCellBalancing(0);
 
     readDeviceMeasurements();
     BCC_MCU_WaitUs(500);

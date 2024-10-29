@@ -1,7 +1,9 @@
 #include "mcu_wrapper.h"
 
 void BCC_MCU_WaitMs(uint16_t delay) {
-  delayMicroseconds((uint32_t)(0.001 * delay));
+  for (uint16_t i = 0; i < delay; i++) {
+    delayMicroseconds(1000);
+  }
 }
 
 void BCC_MCU_WaitUs(uint32_t delay) {

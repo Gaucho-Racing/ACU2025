@@ -37,6 +37,10 @@
 #ifndef __BCC_H__
 #define __BCC_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*******************************************************************************
  * Includes
  ******************************************************************************/
@@ -1195,6 +1199,10 @@ extern void BCC_MCU_WriteEnPin(const uint8_t drvInstance, const uint8_t value);
 extern uint32_t BCC_MCU_ReadIntbPin(const uint8_t drvInstance);
 
 /*! @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __BCC_H__ */
 /*******************************************************************************

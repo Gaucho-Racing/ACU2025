@@ -5,6 +5,8 @@
 #include "Battery.h"
 #include "mcu_wrapper.h"
 #include "bcc.h"
+#include "bcc_communication.h"
+#include "bcc_diagnostics.h"
 #include "SPISlave_T4.h"
 
 // Battery
@@ -31,24 +33,30 @@ volatile int spiRxComplete = 0; // Flag to indicate if SPI reception is complete
 void nop(bcc_drv_config_t * const drvConfig);
 
 void setup() {
+  Serial.begin(1000000);
+  BCC_TX_SPI->begin(); // init SPI bus for transmission
+  BCC_RX_SPI.begin(); // init the SPI bus for reception (slave mode)
 
-    Serial.begin(1000000);
-    BCC_TX_SPI->begin(); // init SPI bus for transmission
-    BCC_RX_SPI.begin(); // init the SPI bus for reception (slave mode)
+  // Initialize BCC functions
+  battery->drvConfig.commMode = BCC_MODE_TPL;
+  battery->drvConfig.drvInstance = 0U;
+  battery->drvConfig.devicesCnt = NUM_TOTAL_IC;
 
-    // Initialize BCC functions
-    battery->drvConfig.commMode = BCC_MODE_TPL;
-    battery->drvConfig.drvInstance = 0U;
-    battery->drvConfig.devicesCnt = NUM_TOTAL_IC;
+  for(uint8_t i = 0; i < NUM_TOTAL_IC; i++){
+      battery->drvConfig.device[i] = BCC_DEVICE_MC33771C;
+      battery->drvConfig.cellCnt[i] = NUM_CELL_IC;
+  }
+  battery->drvConfig.loopBack = true;
 
-    for(uint8_t i = 0; i < NUM_TOTAL_IC; i++){
-        battery->drvConfig.device[i] = BCC_DEVICE_MC33771C;
-        battery->drvConfig.cellCnt[i] = NUM_CELL_IC;
-    }
-    battery->drvConfig.loopBack = true;
+  state = STANDBY;
+  Serial.println("State => Standby");
 
-    state = STANDBY;
-    Serial.println("State => Standby");
+  bccError = BCC_Init(&(battery->drvConfig));
+  if(bccError != bcc_status_t::BCC_STATUS_SUCCESS){
+    state = SHUTDOWN;
+  }
+  else state = PRECHARGE;
+  battery->init();
 }
 
 void loop() {
@@ -58,12 +66,7 @@ void loop() {
   switch (state)
   {
     case STANDBY:
-      bccError = BCC_Init(&(battery->drvConfig));
-      if(bccError != bcc_status_t::BCC_STATUS_SUCCESS){
-        state = SHUTDOWN;
-      }
-      else state = PRECHARGE;
-      battery->init();
+      
       break;
 
     case PRECHARGE:
@@ -74,8 +77,8 @@ void loop() {
       // chargeState();
       break;
 
-    case NORMAL:
-      // normalState();
+    case DRIVE:
+      // driveState();
       break;
 
     case SHUTDOWN:

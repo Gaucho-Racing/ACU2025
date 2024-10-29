@@ -6,6 +6,6 @@ enum States {
     SHUTDOWN,
     PRECHARGE,
     CHARGE,
-    NORMAL,
+    DRIVE,
 };
 #endif

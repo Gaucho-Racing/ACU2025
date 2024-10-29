@@ -2,10 +2,10 @@
 #define CONFIG_H
 
 #pragma once
-#define NUM_TOTAL_IC 10
+#define NUM_TOTAL_IC 1
 #define NUM_CELL_IC 14
 
-#define PRM_CELL_MAX_VOLT 4.2
+#define PRM_CELL_MAX_VOLT 4.2 // TODO: fix
 #define PRM_CELL_MIN_VOLT 2.8
 
 #define INIT_REG_CNT 45
@@ -14,7 +14,7 @@
 #define CBX_CFG 0.0
 #define RX_BUF_SIZE 8
 
-#define NUM_TOTAL_IC 10
+#define NUM_TOTAL_IC 1
 #define NUM_CELL_IC 14
 
 #define CELL_MIN_TEMP 0.0 // to set later
