@@ -77,37 +77,37 @@ extern "C" {
 
 /*! @brief Number of consecutive bytes reserved for each SPI frame in buffers
  * passed to BCC_MCU_Transfer* functions (i.e. SPI frame alignment). */
-#define BCC_MSG_SIZE              8U
+#define BCC_MSG_SIZE              6U
 
 /*! @brief Index to Register data byte (higher byte) of SPI frame in the
  * buffers passed to BCC_MCU_Transfer* functions.
  * Note: This byte should be the first sent to (received from) the SPI bus. */
-#define BCC_MSG_IDX_DATA_H        3U
+#define BCC_MSG_IDX_DATA_H        0U
 
 /*! @brief Index to Register data byte (lower byte) of SPI frame in the buffers
  * passed to BCC_MCU_Transfer* functions.
  * Note: This byte should be the second sent to (received from) the SPI bus. */
-#define BCC_MSG_IDX_DATA_L        2U
+#define BCC_MSG_IDX_DATA_L        1U
 
 /*! @brief Index to Register address byte of SPI frame in the buffers passed to
  * BCC_MCU_Transfer* functions.
  * Note: This byte should be the third sent to (received from) the SPI bus. */
-#define BCC_MSG_IDX_ADDR          1U
+#define BCC_MSG_IDX_ADDR          2U
 
 /*! @brief Index to Device address (CID) byte of SPI frame in the buffers
  * passed to BCC_MCU_Transfer* functions.
  * Note: This byte should be the fourth sent to (received from) the SPI bus. */
-#define BCC_MSG_IDX_CID           0U
+#define BCC_MSG_IDX_CID           3U
 
 /*! @brief Index to Message counter and Command byte of SPI frame in the
  * buffers passed to BCC_MCU_Transfer* functions.
  * Note: This byte should be the fifth sent to (received from) the SPI bus. */
-#define BCC_MSG_IDX_CNT_CMD       5U
+#define BCC_MSG_IDX_CNT_CMD       4U
 
 /*! @brief Index to CRC byte of SPI frame in the buffers passed to
  * BCC_MCU_Transfer* functions.
  * Note: This byte should be the last sent to (received from) the SPI bus. */
-#define BCC_MSG_IDX_CRC           4U
+#define BCC_MSG_IDX_CRC           5U
 
 /*******************************************************************************
  * Definitions

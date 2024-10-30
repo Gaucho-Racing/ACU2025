@@ -17,10 +17,6 @@ bcc_drv_data_t drv_data; // contains cellMap, rxBuf, msgCenter
 bool bccInitialized = false; 
 bool loopBackOk = true; 
 
-uint8_t transBuf[5];  // Adjust size as per your protocol
-uint8_t recvBuf[RX_BUF_SIZE];
-uint16_t recvTrCnt;
-
 // State
 States state;
 
@@ -35,6 +31,13 @@ void nop(bcc_drv_config_t * const drvConfig);
 
 void setup() {
   Serial.begin(1000000);
+
+  pinMode(PIN_BCC_TX_CS, OUTPUT);
+  pinMode(PIN_BCC_EN, OUTPUT);
+  pinMode(PIN_BCC_INT, INPUT);
+  digitalWrite(PIN_BCC_TX_CS, HIGH);
+  digitalWrite(PIN_BCC_EN, LOW);
+
   Serial.println("Init SPIs");
   BCC_TX_SPI->begin(); // init SPI bus for transmission
   BCC_RX_SPI.begin(); // init the SPI bus for reception (slave mode)
@@ -52,11 +55,13 @@ void setup() {
   battery->drvConfig.loopBack = false;
 
   state = STANDBY;
-  Serial.print("BCC_Init");
+  Serial.println("BCC_Init");
   bccError = BCC_Init(&(battery->drvConfig));
   while (bccError != bcc_status_t::BCC_STATUS_SUCCESS){
-    Serial.print(" failed");
+    Serial.print(" failed: ");
+    print_bcc_status(bccError);
     delay(1000);
+    Serial.print("\n\n\n");
     bccError = BCC_Init(&(battery->drvConfig));
   }
   Serial.println("success");

@@ -112,6 +112,71 @@ int debug(Battery *bty){
     return 0;
 }
 
+    // BCC_STATUS_SUCCESS        = 0U,   /*!< No error. */
+    // BCC_STATUS_PARAM_RANGE    = 1U,   /*!< Parameter out of range. */
+    // BCC_STATUS_SPI_FAIL       = 2U,   /*!< Fail in the SPI communication. */
+    // BCC_STATUS_COM_TIMEOUT    = 3U,   /*!< Communication timeout. */
+    // BCC_STATUS_COM_ECHO       = 4U,   /*!< Received "echo" frame from MC33664 does not correspond
+    //                                        to the sent frame. */
+    // BCC_STATUS_COM_CRC        = 5U,   /*!< Wrong CRC in the received SPI frame. */
+    // BCC_STATUS_COM_MSG_CNT    = 6U,   /*!< Received frame has a valid CRC but the message counter
+    //                                        value does not match to the expected one. */
+    // BCC_STATUS_COM_NULL       = 7U,   /*!< Received frame has a valid CRC but all bit-fields
+    //                                        except CRC and message counter are zero. This occurs only
+    //                                        in SPI communication mode: during the very first message
+    //                                        or as a response to an invalid request from MCU. */
+    // BCC_STATUS_DIAG_FAIL      = 8U,   /*!< It is not allowed to enter diagnostic mode. */
+    // BCC_STATUS_EEPROM_ERROR   = 9U,   /*!< An error occurred during the communication to EEPROM. */
+    // BCC_STATUS_EEPROM_PRESENT = 10U,  /*!< No EEPROM detected. */
+    // BCC_STATUS_DATA_RDY       = 11U,  /*!< A new sequence of conversions is currently running. */
+    // BCC_STATUS_TIMEOUT_START  = 12U   /*!< An error reported in BCC_MCU_StartTimeout function. */
+void print_bcc_status(bcc_status_t bccStatus){
+    switch (bccStatus)
+    {
+    case BCC_STATUS_SUCCESS:
+        Serial.print("Success\n");
+        break;
+    case BCC_STATUS_PARAM_RANGE:
+        Serial.print("Parameter out of range\n");
+        break;
+    case BCC_STATUS_SPI_FAIL:
+        Serial.print("SPI failed\n");
+        break;
+    case BCC_STATUS_COM_TIMEOUT:
+        Serial.print("communication timeout\n");
+        break;
+    case BCC_STATUS_COM_ECHO:
+        Serial.print("Echo frame doesn't correspond to sent frame\n");
+        break;
+    case BCC_STATUS_COM_CRC:
+        Serial.print("CRC error\n");
+        break;
+    case BCC_STATUS_COM_MSG_CNT:
+        Serial.print("Message counter mismatch\n");
+        break;
+    case BCC_STATUS_COM_NULL:
+        Serial.print("NULL message\n");
+        break;
+    case BCC_STATUS_DIAG_FAIL:
+        Serial.print("Diagnoctic mode not allowed\n");
+        break;
+    case BCC_STATUS_EEPROM_ERROR:
+        Serial.print("EEPROM communication error\n");
+        break;
+    case BCC_STATUS_EEPROM_PRESENT:
+        Serial.print("EEPROM device not detected\n");
+        break;
+    case BCC_STATUS_DATA_RDY:
+        Serial.print("New convertion already running\n");
+        break;
+    case BCC_STATUS_TIMEOUT_START:
+        Serial.print("BCC_MCU_StartTimeout function error\n");
+    default:
+        Serial.print("Unknown status\n");
+        break;
+    }
+}
+
 // Cell Balancing - Active
 /************** INFO **************
  * Actively redistributes charge among

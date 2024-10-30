@@ -6,10 +6,6 @@
 #include "config.h"
 #include "bcc.h"
 
-extern uint8_t transBuf[5];  // Adjust size as per your protocol
-extern uint8_t recvBuf[RX_BUF_SIZE];
-extern uint16_t recvTrCnt;
-
 void BCC_MCU_WaitUs(uint32_t delay);
 void BCC_MCU_WaitMs(uint16_t delay);
 bcc_status_t BCC_MCU_StartTimeout(uint32_t timeoutUs);
