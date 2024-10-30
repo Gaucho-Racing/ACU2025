@@ -5,12 +5,13 @@
 #include "Battery.h"
 #include "mcu_wrapper.h"
 #include "bcc.h"
-#include "bcc_communication.h"
-#include "bcc_diagnostics.h"
 #include "SPISlave_T4.h"
+#include "debug.h"
+
+#define DEBUG
 
 // Battery
-Battery * battery;
+Battery* battery = new Battery;
 bcc_status_t bccError;
 bcc_drv_data_t drv_data; // contains cellMap, rxBuf, msgCenter
 bool bccInitialized = false; 
@@ -34,33 +35,37 @@ void nop(bcc_drv_config_t * const drvConfig);
 
 void setup() {
   Serial.begin(1000000);
+  Serial.println("Init SPIs");
   BCC_TX_SPI->begin(); // init SPI bus for transmission
   BCC_RX_SPI.begin(); // init the SPI bus for reception (slave mode)
 
   // Initialize BCC functions
+  Serial.println("Init BCC functions");
   battery->drvConfig.commMode = BCC_MODE_TPL;
   battery->drvConfig.drvInstance = 0U;
   battery->drvConfig.devicesCnt = NUM_TOTAL_IC;
-
+  Serial.println("Init devices");
   for(uint8_t i = 0; i < NUM_TOTAL_IC; i++){
       battery->drvConfig.device[i] = BCC_DEVICE_MC33771C;
       battery->drvConfig.cellCnt[i] = NUM_CELL_IC;
   }
-  battery->drvConfig.loopBack = true;
+  battery->drvConfig.loopBack = false;
 
   state = STANDBY;
-  Serial.println("State => Standby");
-
+  Serial.print("BCC_Init");
   bccError = BCC_Init(&(battery->drvConfig));
-  if(bccError != bcc_status_t::BCC_STATUS_SUCCESS){
-    state = SHUTDOWN;
+  while (bccError != bcc_status_t::BCC_STATUS_SUCCESS){
+    Serial.print(" failed");
+    delay(1000);
+    bccError = BCC_Init(&(battery->drvConfig));
   }
-  else state = PRECHARGE;
+  Serial.println("success");
   battery->init();
 }
 
+uint32_t prev_mill = 0;
 void loop() {
-  Serial.println("Please work\n");
+  // Serial.println("Please work\n");
   // nop(&(battery->drvConfig));
   // put your main code here, to run repeatedly:
   switch (state)
@@ -86,26 +91,24 @@ void loop() {
       break;
 
     default:
-      // state = SHUTDOWN;
-      delay(10000);
+      state = SHUTDOWN;
       break;
-    
-    
-    battery->readDeviceMeasurements();
-    // nop(&(battery->drvConfig));
-    battery->printDeviceMeasurements();
-
-    bccError = BCC_Sleep(&(battery->drvConfig));
-    for (uint8_t i = 0; i < 5000000; i++);
-    BCC_WakeUp(&(battery->drvConfig));
-    
-    #ifdef DEBUG
-      if(millis() - prev_mill > 500){
-        prev_mill = millis();
-        debug();
-      }
-    #endif
   }
+    
+  battery->readDeviceMeasurements();
+  // nop(&(battery->drvConfig));
+  battery->printDeviceMeasurements();
+
+  bccError = BCC_Sleep(&(battery->drvConfig));
+  for (uint32_t i = 0; i < 5000000; i++);
+  BCC_WakeUp(&(battery->drvConfig));
+  
+  #ifdef DEBUG
+    if(millis() - prev_mill > 500){
+      prev_mill = millis();
+      debug(battery);
+    }
+  #endif
 }
 
 void nop(bcc_drv_config_t * const drvConfig) {
