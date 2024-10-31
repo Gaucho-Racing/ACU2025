@@ -8,7 +8,7 @@
 #include "SPISlave_T4.h"
 #include "debug.h"
 
-#define DEBUG
+// #define DEBUG
 
 // Battery
 Battery* battery = new Battery;
@@ -103,8 +103,9 @@ void loop() {
   battery->readDeviceMeasurements();
   // nop(&(battery->drvConfig));
   battery->printDeviceMeasurements();
-
   bccError = BCC_Sleep(&(battery->drvConfig));
+  delay(1000);
+
   for (uint32_t i = 0; i < 5000000; i++);
   BCC_WakeUp(&(battery->drvConfig));
   
