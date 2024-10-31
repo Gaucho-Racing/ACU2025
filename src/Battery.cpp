@@ -2,6 +2,7 @@
 #include "bcc.h"
 #include "bcc_communication.h"
 #include "bcc_diagnostics.h"
+#include "debug.h"
 
 void clear_faults(bcc_drv_config_t * drvConfig)
 {
@@ -32,11 +33,12 @@ void Battery::toggleCellBalancing(bool enable){
     //turn on/off balancing
     for(int i = 0; i < 14; i++){
         bcc_cid_t cid = bcc_cid_t(i);
-        if(true) BCC_CB_Enable(&drvConfig, cid, enable);
+        if(true) {
+            bcc_status_t status = BCC_CB_Enable(&drvConfig, cid, enable);
+            Serial.print("Set cell balancing: "); print_bcc_status(status);
+        }
         else BCC_CB_Pause(&drvConfig, cid, enable);
     }
-
-    Serial.println("Successfully updated Cell Balancing Settings");
 }
 
 void Battery::init(){
@@ -76,71 +78,81 @@ void Battery::init(){
     }
 
     // enable cell balancing
-    toggleCellBalancing(1);
+    //toggleCellBalancing(1);
     return;
 }
 
 
 void Battery::readDeviceMeasurements() {
     
-    uint32_t measurements[NUM_TOTAL_IC];
-    int16_t temps[1];
+    uint32_t measurements[NUM_CELL_IC];
+    int16_t temp_measures[NUM_CELL_IC];
+    // int16_t temps[1];
     bcc_status_t error;
 
-    toggleCellBalancing(0);
-    bzero(measurements, NUM_TOTAL_IC);
-    bzero(temps, 1);
+    //toggleCellBalancing(0);
+    bzero(measurements, NUM_CELL_IC);
+    // bzero(temps, 1);
+
     // Get Cell/Stack Voltages in Volts & IC temps in Celcius
-    for(uint8_t i = 0; i < NUM_CELL_IC; i++){
+    for(uint8_t i = 0; i < NUM_TOTAL_IC; i++){
 
         if(true){
-            error = BCC_Meas_GetCellVoltages(&drvConfig, bcc_cid_t(i), measurements);
-            BCC_MCU_WaitUs(500);
-
+            BCC_Meas_StartAndWait(&drvConfig, bcc_cid_t(i+1), BCC_AVG_1);
+            error = BCC_Meas_GetCellVoltages(&drvConfig, bcc_cid_t(i+1), measurements);
             if(error != BCC_STATUS_SUCCESS){
                 // this->state = SHUTDOWN;
-                toggleCellBalancing(&drvConfig);
+                //toggleCellBalancing(&drvConfig);
                 return;
             }
+            Serial.print("GetCellVoltages: "); print_bcc_status(error);
 
-            for(uint8_t j = 0; j < NUM_TOTAL_IC; j++){
-                this->cellVoltage[i*NUM_TOTAL_IC + j] = measurements[j] * 0.001;
+            for(uint8_t j = 0; j < NUM_CELL_IC; j++){
+                this->cellVoltage[i*NUM_CELL_IC + j] = measurements[j] * 1e-6f;
             }
+
             bzero(measurements, NUM_TOTAL_IC);
-
-            error = BCC_Meas_GetStackVoltage(&drvConfig, bcc_cid_t(i), measurements);
-
-            BCC_MCU_WaitUs(500);
+            error = BCC_Meas_GetStackVoltage(&drvConfig, bcc_cid_t(i+1), measurements);
             if(error != BCC_STATUS_SUCCESS){
                 // this->state = SHUTDOWN;
-                toggleCellBalancing(&drvConfig);
+                //toggleCellBalancing(&drvConfig);
                 return;
             }
-            this->stackVoltage[i] = (*measurements) * 0.001;
+            Serial.print("GetStackVoltage: "); print_bcc_status(error);
+            this->stackVoltage[i] = measurements[0];
             bzero(measurements, 1);
         }
 
         if(true){
-            error = BCC_Meas_GetIcTemperature(&drvConfig, bcc_cid_t(i), bcc_temp_unit_t::BCC_TEMP_CELSIUS, temps);
-            BCC_MCU_WaitUs(500);
-            this->cellTemp[i] = *temps;
-            bzero(temps, 1);
+            bzero(temp_measures, NUM_CELL_IC);
+            while((error = BCC_Meas_GetIcTemperature(&drvConfig, bcc_cid_t(i), BCC_TEMP_CELSIUS, temp_measures)) != BCC_STATUS_SUCCESS){
+                #ifdef DEBUG
+                    Serial.println('Encountered error while trying BCC_Meas_GetIcTemperature')
+                    print_bcc_status(error);
+                #endif
+                BCC_MCU_WaitUs(500);
+            }
+            for(uint8_t j = 0; j < NUM_CELL_IC; j++){
+                this->cellTemp[i*NUM_CELL_IC+j] = temp_measures[j]; // when printing make sure to multiply by 0.1
+            }
+            // bzero(temps, 1);
         }
     }
-    toggleCellBalancing(0);
+    //toggleCellBalancing(0);
     return;
 }
 
 void Battery::checkTemperature() {
-    for(int i = 0; i < (NUM_CELL_IC); i++){
-        
-        if(this->cellTemp[i] > CELL_MAX_TEMP){
-            Serial.println("OT detected");
-            return;
-        }
-        if(this->cellTemp[i]){
-            Serial.println("UT detected");
-            return;
+    for(int i = 0; i < NUM_TOTAL_IC; i++){
+        for(int j = 0; j < (NUM_CELL_IC); i++){
+            if(this->cellTemp[i*NUM_CELL_IC + j] > CELL_MAX_TEMP){
+                Serial.println("OT detected");
+                return;
+            }
+            if(this->cellTemp[i*NUM_CELL_IC + j] < CELL_MIN_TEMP){
+                Serial.println("UT detected");
+                return;
+            }
         }
     }
 }
@@ -148,11 +160,11 @@ void Battery::checkTemperature() {
 void Battery::checkVoltage() {
     for(int i = 0; i < NUM_TOTAL_IC; i++){
         for(int j = 0; j < NUM_CELL_IC; j++){
-            if(this->cellVoltage[i*NUM_CELL_IC + j] > PRM_CELL_MAX_VOLT){
+            if(this->cellVoltage[i*NUM_CELL_IC + j] > CELL_MAX_VOLT){
                 Serial.println("OV failure");
                 // do sth
             }
-            else if(this->cellVoltage[i*NUM_CELL_IC + j] < PRM_CELL_MIN_VOLT){
+            else if(this->cellVoltage[i*NUM_CELL_IC + j] < CELL_MIN_VOLT){
                 Serial.println("UV failure");
                 // do sth
             }
@@ -177,18 +189,18 @@ bool Battery::checkStatus() {
 void Battery::printDeviceMeasurements() {
     for(uint8_t cell = 0; cell < NUM_CELL_IC * NUM_TOTAL_IC; cell++){
         if(cell % NUM_CELL_IC == 0){
-            Serial.println('\n');
+            Serial.printf("\nSegment %u: ", cell / NUM_CELL_IC);
         }
-        Serial.printf("CELL[Cell %d: %5.03f", cell, this->cellVoltage[cell]);
+        Serial.printf("%d:%5.03f ", cell, this->cellVoltage[cell]);
     }
 
-    for(uint8_t cell = 0; cell < NUM_CELL_IC; cell++){
-         Serial.printf("Stack Voltage [Cell %d: %5.03f", cell, this->stackVoltage[cell]);
-    }
+    // for(uint8_t cell = 0; cell < NUM_CELL_IC; cell++){
+    //      Serial.printf("Stack Voltage [Cell %d: %5.03f", cell, this->stackVoltage[cell]);
+    // }
 
-    for(uint8_t cell = 0; cell < NUM_CELL_IC; cell++){
-         Serial.printf("Cell Temp [Cell %d: %5.03f", cell, this->cellTemp[cell]);
-    }
+    // for(uint8_t cell = 0; cell < NUM_CELL_IC; cell++){
+    //      Serial.printf("Cell Temp [Cell %d: %5.03f", cell, this->cellTemp[cell]);
+    // }
 }
 
 bool Battery::system_check(bool startup){
