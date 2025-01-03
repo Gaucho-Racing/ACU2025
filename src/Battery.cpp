@@ -86,12 +86,14 @@ void Battery::init(){
 void Battery::readDeviceMeasurements() {
     
     uint32_t measurements[NUM_CELL_IC];
-    int16_t temps[1];
+    int16_t temp_measures[NUM_CELL_IC];
+    // int16_t temps[1];
     bcc_status_t error;
 
     //toggleCellBalancing(0);
     bzero(measurements, NUM_CELL_IC);
-    bzero(temps, 1);
+    // bzero(temps, 1);
+
     // Get Cell/Stack Voltages in Volts & IC temps in Celcius
     for(uint8_t i = 0; i < NUM_TOTAL_IC; i++){
 
@@ -122,10 +124,18 @@ void Battery::readDeviceMeasurements() {
         }
 
         if(true){
-            error = BCC_Meas_GetIcTemperature(&drvConfig, bcc_cid_t(i), bcc_temp_unit_t::BCC_TEMP_CELSIUS, temps);
-            BCC_MCU_WaitUs(500);
-            this->cellTemp[i] = temps[0];
-            bzero(temps, 1);
+            bzero(temp_measures, NUM_CELL_IC);
+            while((error = BCC_Meas_GetIcTemperature(&drvConfig, bcc_cid_t(i), BCC_TEMP_CELSIUS, temp_measures)) != BCC_STATUS_SUCCESS){
+                #ifdef DEBUG
+                    Serial.println('Encountered error while trying BCC_Meas_GetIcTemperature')
+                    print_bcc_status(error);
+                #endif
+                BCC_MCU_WaitUs(500);
+            }
+            for(uint8_t j = 0; j < NUM_CELL_IC; j++){
+                this->cellTemp[i*NUM_CELL_IC+j] = temp_measures[j]; // when printing make sure to multiply by 0.1
+            }
+            // bzero(temps, 1);
         }
     }
     //toggleCellBalancing(0);
@@ -133,15 +143,16 @@ void Battery::readDeviceMeasurements() {
 }
 
 void Battery::checkTemperature() {
-    for(int i = 0; i < (NUM_CELL_IC); i++){
-        
-        if(this->cellTemp[i] > CELL_MAX_TEMP){
-            Serial.println("OT detected");
-            return;
-        }
-        if(this->cellTemp[i]){
-            Serial.println("UT detected");
-            return;
+    for(int i = 0; i < NUM_TOTAL_IC; i++){
+        for(int j = 0; j < (NUM_CELL_IC); i++){
+            if(this->cellTemp[i*NUM_CELL_IC + j] > CELL_MAX_TEMP){
+                Serial.println("OT detected");
+                return;
+            }
+            if(this->cellTemp[i*NUM_CELL_IC + j] < CELL_MIN_TEMP){
+                Serial.println("UT detected");
+                return;
+            }
         }
     }
 }

@@ -56,17 +56,17 @@ int temperature_measurement_test(Battery *bty){
             max_temp = max(max_temp, bty->cellTemp[i]);
 
             if(bty->cellTemp[i] < CELL_MIN_TEMP){
-                Serial.printf("%5.01f | Under] ", bty->cellTemp[i]);
+                Serial.printf("%5.01f | Under] ", bty->cellTemp[i] * 0.1);
 
             } else if (bty->cellTemp[i] > CELL_MAX_TEMP){
-                Serial.printf("%5.01f | Over] ", bty->cellTemp[i]);
+                Serial.printf("%5.01f | Over] ", bty->cellTemp[i] * 0.1);
             }
             else{
                 Serial.printf("%5.01f] ", bty->cellTemp[i]);
             }
         }
         Serial.println();
-        Serial.printf("Min temp: %5.01f | Max temp: %5.01f\n", min_temp, max_temp);
+        Serial.printf("Min temp: %5.01f | Max temp: %5.01f\n", min_temp * 0.1, max_temp * 0.1);
     }
     Serial.println("-----------------------------------------");
     return 1;

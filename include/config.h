@@ -19,8 +19,8 @@
 #define NUM_TOTAL_IC 1
 #define NUM_CELL_IC 14
 
-#define CELL_MIN_TEMP 0.0 // to set later
-#define CELL_MAX_TEMP 1000.0 // to set later
+#define CELL_MIN_TEMP 0.0 // to set later => when printing multiply by 0.1 to get Celcius
+#define CELL_MAX_TEMP 1000.0 // to set later => when printing multiply by 0.1 to get Celcius
 
 #define MIN_BALL_TEMP 0.0 // to set later
 #define MAX_BALL_TEMP 1000.0 // to set later
