@@ -1,0 +1,1 @@
+#define ATTINY_TWI_WAKE_20MCLK true
