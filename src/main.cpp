@@ -8,7 +8,7 @@
 #include "SPISlave_T4.h"
 #include "debug.h"
 
-// #define DEBUG
+#define DEBUG
 
 // Battery
 Battery* battery = new Battery;
@@ -26,6 +26,9 @@ SPISlave_T4<&SPI, SPI_8_BITS> BCC_RX_SPI; // 8-bit data mode
 uint32_t spiRx[10]; // Array to store received SPI data.
 volatile int spiRxIdx; //  Index for received SPI data
 volatile int spiRxComplete = 0; // Flag to indicate if SPI reception is complete
+
+// BCC MCU timeout thingy
+uint32_t BCC_MCU_Timeout_Start;
 
 void nop(bcc_drv_config_t * const drvConfig);
 
@@ -55,7 +58,7 @@ void setup() {
   battery->drvConfig.loopBack = false;
 
   state = STANDBY;
-  Serial.println("BCC_Init");
+  Serial.println("BCC_Init...");
   bccError = BCC_Init(&(battery->drvConfig));
   while (bccError != bcc_status_t::BCC_STATUS_SUCCESS){
     Serial.print(" failed: ");
@@ -65,12 +68,14 @@ void setup() {
     bccError = BCC_Init(&(battery->drvConfig));
   }
   Serial.println("success");
+
+  Serial.println("Battery init...");
   battery->init();
 }
 
 uint32_t prev_mill = 0;
 void loop() {
-  // Serial.println("Please work\n");
+  // Serial.print("Please work\n");
   // nop(&(battery->drvConfig));
   // put your main code here, to run repeatedly:
   switch (state)
@@ -102,11 +107,8 @@ void loop() {
     
   battery->readDeviceMeasurements();
   // nop(&(battery->drvConfig));
-  battery->printDeviceMeasurements();
   bccError = BCC_Sleep(&(battery->drvConfig));
-  delay(1000);
-
-  for (uint32_t i = 0; i < 5000000; i++);
+  delay(200);
   BCC_WakeUp(&(battery->drvConfig));
   
   #ifdef DEBUG

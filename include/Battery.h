@@ -75,6 +75,7 @@ public:
     float cellVoltage[140];
     float stackVoltage[10];
     float cellTemp[140];
+    float icTemp[10];
     float balTemp[140]; 
     float cellSOC[140];
     

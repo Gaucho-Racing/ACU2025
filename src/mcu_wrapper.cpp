@@ -10,13 +10,15 @@ void BCC_MCU_WaitUs(uint32_t delay) {
   delayMicroseconds(delay);
 }
 
+extern uint32_t BCC_MCU_Timeout_Start;
 bcc_status_t BCC_MCU_StartTimeout(uint32_t timeoutUs){
   //Serial.print("BCC_MCU_StartTimeout not used\n");
+  BCC_MCU_Timeout_Start = micros();
   return BCC_STATUS_SUCCESS;
 }
 
 bool BCC_MCU_TimeoutExpired(void){
-  return false;
+  return (micros() - BCC_MCU_Timeout_Start) > 1000;
 }
 
 void BCC_MCU_Assert(const bool x) {

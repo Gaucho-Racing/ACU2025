@@ -7,20 +7,20 @@
 void clear_faults(bcc_drv_config_t * drvConfig)
 {
     bcc_status_t * status = new bcc_status_t();
-    for (uint8_t cid = 1; cid <= NUM_CELL_IC; cid++)
+    for (uint8_t ic = 1; ic <= NUM_CELL_IC; ic++)
     {
-        bcc_cid_t id = (bcc_cid_t)cid;
-        *status = BCC_Fault_ClearStatus(drvConfig, id, bcc_fault_status_t::BCC_FS_CELL_OV);
-        *status = BCC_Fault_ClearStatus(drvConfig, id, bcc_fault_status_t::BCC_FS_CELL_UV);
-        *status = BCC_Fault_ClearStatus(drvConfig, id, bcc_fault_status_t::BCC_FS_CB_OPEN);
-        *status = BCC_Fault_ClearStatus(drvConfig, id, bcc_fault_status_t::BCC_FS_CB_SHORT);
-        *status = BCC_Fault_ClearStatus(drvConfig, id, bcc_fault_status_t::BCC_FS_GPIO_STATUS);
-        *status = BCC_Fault_ClearStatus(drvConfig, id, bcc_fault_status_t::BCC_FS_AN_OT_UT);
-        *status = BCC_Fault_ClearStatus(drvConfig, id, bcc_fault_status_t::BCC_FS_GPIO_SHORT);
-        *status = BCC_Fault_ClearStatus(drvConfig, id, bcc_fault_status_t::BCC_FS_COMM);
-        *status = BCC_Fault_ClearStatus(drvConfig, id, bcc_fault_status_t::BCC_FS_FAULT1);
-        *status = BCC_Fault_ClearStatus(drvConfig, id, bcc_fault_status_t::BCC_FS_FAULT2);
-        *status = BCC_Fault_ClearStatus(drvConfig, id, bcc_fault_status_t::BCC_FS_FAULT3);
+        bcc_cid_t cid = (bcc_cid_t)ic;
+        *status = BCC_Fault_ClearStatus(drvConfig, cid, bcc_fault_status_t::BCC_FS_CELL_OV);
+        *status = BCC_Fault_ClearStatus(drvConfig, cid, bcc_fault_status_t::BCC_FS_CELL_UV);
+        *status = BCC_Fault_ClearStatus(drvConfig, cid, bcc_fault_status_t::BCC_FS_CB_OPEN);
+        *status = BCC_Fault_ClearStatus(drvConfig, cid, bcc_fault_status_t::BCC_FS_CB_SHORT);
+        *status = BCC_Fault_ClearStatus(drvConfig, cid, bcc_fault_status_t::BCC_FS_GPIO_STATUS);
+        *status = BCC_Fault_ClearStatus(drvConfig, cid, bcc_fault_status_t::BCC_FS_AN_OT_UT);
+        *status = BCC_Fault_ClearStatus(drvConfig, cid, bcc_fault_status_t::BCC_FS_GPIO_SHORT);
+        *status = BCC_Fault_ClearStatus(drvConfig, cid, bcc_fault_status_t::BCC_FS_COMM);
+        *status = BCC_Fault_ClearStatus(drvConfig, cid, bcc_fault_status_t::BCC_FS_FAULT1);
+        *status = BCC_Fault_ClearStatus(drvConfig, cid, bcc_fault_status_t::BCC_FS_FAULT2);
+        *status = BCC_Fault_ClearStatus(drvConfig, cid, bcc_fault_status_t::BCC_FS_FAULT3);
         if(*status != BCC_STATUS_SUCCESS) return;
     }
 }
@@ -28,16 +28,17 @@ void clear_faults(bcc_drv_config_t * drvConfig)
 Battery::Battery(){}
 
 void Battery::toggleCellBalancing(bool enable){
-    Serial.println("Setting Cell Balancing");
-
     //turn on/off balancing
-    for(int i = 0; i < 14; i++){
-        bcc_cid_t cid = bcc_cid_t(i);
-        if(true) {
-            bcc_status_t status = BCC_CB_Enable(&drvConfig, cid, enable);
-            Serial.print("Set cell balancing: "); print_bcc_status(status);
+    for(uint8_t i = 0; i < NUM_TOTAL_IC; i++){
+        bcc_cid_t cid = bcc_cid_t(i+1);
+        if(enable) {
+            bcc_status_t status = BCC_CB_Enable(&drvConfig, cid, 1);
+            Serial.print("Enable cell balancing: "); print_bcc_status(status);
         }
-        else BCC_CB_Pause(&drvConfig, cid, enable);
+        else {
+            bcc_status_t status = BCC_CB_Pause(&drvConfig, cid, 1);
+            Serial.print("Disable cell balancing: "); print_bcc_status(status);
+        }
     }
 }
 
@@ -55,7 +56,7 @@ void Battery::init(){
     readDeviceMeasurements();
     BCC_MCU_WaitUs(500);
 
-    Serial.printf("cell_OV_Threshold: %5.03f, cell_UV_Threshold: %5.03f\n", this->maxCellVolt, this->minCellVolt);
+    Serial.printf("cell_OV_Threshold: %5.03f, cell_UV_Threshold: %5.03f\n", CELL_MAX_VOLT, CELL_MIN_VOLT);
     if(errors != BCC_STATUS_SUCCESS){
         // state = SHUTDOWN;
         return;
@@ -94,10 +95,10 @@ void Battery::readDeviceMeasurements() {
     bzero(measurements, NUM_CELL_IC);
     // bzero(temps, 1);
 
-    // Get Cell/Stack Voltages in Volts & IC temps in Celcius
     for(uint8_t i = 0; i < NUM_TOTAL_IC; i++){
 
-        if(true){
+        if(true){ // get cell & stack voltage
+            //Serial.print("GetCellVoltage: "); 
             BCC_Meas_StartAndWait(&drvConfig, bcc_cid_t(i+1), BCC_AVG_1);
             error = BCC_Meas_GetCellVoltages(&drvConfig, bcc_cid_t(i+1), measurements);
             if(error != BCC_STATUS_SUCCESS){
@@ -105,12 +106,13 @@ void Battery::readDeviceMeasurements() {
                 //toggleCellBalancing(&drvConfig);
                 return;
             }
-            Serial.print("GetCellVoltages: "); print_bcc_status(error);
+            //print_bcc_status(error);
 
             for(uint8_t j = 0; j < NUM_CELL_IC; j++){
                 this->cellVoltage[i*NUM_CELL_IC + j] = measurements[j] * 1e-6f;
             }
 
+            //Serial.print("GetStackVoltage: "); 
             bzero(measurements, NUM_TOTAL_IC);
             error = BCC_Meas_GetStackVoltage(&drvConfig, bcc_cid_t(i+1), measurements);
             if(error != BCC_STATUS_SUCCESS){
@@ -118,24 +120,27 @@ void Battery::readDeviceMeasurements() {
                 //toggleCellBalancing(&drvConfig);
                 return;
             }
-            Serial.print("GetStackVoltage: "); print_bcc_status(error);
-            this->stackVoltage[i] = measurements[0];
-            bzero(measurements, 1);
+            //print_bcc_status(error);
+            //this->stackVoltage[i] = measurements[0];
+        }
+
+        if(true){ // get IC temperature
+            //Serial.print("GetIcTemperature: "); 
+            bzero(temp_measures, NUM_CELL_IC);
+            error = BCC_Meas_GetIcTemperature(&drvConfig, bcc_cid_t(i+1), BCC_TEMP_CELSIUS, temp_measures);
+            //print_bcc_status(error);
+            this->icTemp[i] = temp_measures[i] * 0.1f; // when printing make sure to multiply by 0.1
+            // bzero(temps, 1);
         }
 
         if(true){
-            bzero(temp_measures, NUM_CELL_IC);
-            while((error = BCC_Meas_GetIcTemperature(&drvConfig, bcc_cid_t(i), BCC_TEMP_CELSIUS, temp_measures)) != BCC_STATUS_SUCCESS){
-                #ifdef DEBUG
-                    Serial.println('Encountered error while trying BCC_Meas_GetIcTemperature')
-                    print_bcc_status(error);
-                #endif
-                BCC_MCU_WaitUs(500);
+            Serial.print("GetCellTemperature: ");
+            for(uint8_t j = 0; j < 32; j++) { // TODO: fix this loop
+                uint8_t readByte;
+                error = BCC_EEPROM_Read(&drvConfig, bcc_cid_t(i+1), j+1, &readByte);
+                Serial.print(readByte); print_bcc_status(error);
+                if (error == BCC_STATUS_SUCCESS) this->cellTemp[i*NUM_CELL_IC + j] = (float)readByte;
             }
-            for(uint8_t j = 0; j < NUM_CELL_IC; j++){
-                this->cellTemp[i*NUM_CELL_IC+j] = temp_measures[j]; // when printing make sure to multiply by 0.1
-            }
-            // bzero(temps, 1);
         }
     }
     //toggleCellBalancing(0);

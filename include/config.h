@@ -1,7 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#pragma once
 #define NUM_TOTAL_IC 1
 #define NUM_CELL_IC 14
 
@@ -15,9 +14,6 @@
 #define GPIO_CFG2 0.0
 #define CBX_CFG 0.0
 #define RX_BUF_SIZE 8
-
-#define NUM_TOTAL_IC 1
-#define NUM_CELL_IC 14
 
 #define CELL_MIN_TEMP 0.0 // to set later => when printing multiply by 0.1 to get Celcius
 #define CELL_MAX_TEMP 1000.0 // to set later => when printing multiply by 0.1 to get Celcius

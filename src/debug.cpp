@@ -66,7 +66,7 @@ int temperature_measurement_test(Battery *bty){
             }
         }
         Serial.println();
-        Serial.printf("Min temp: %5.01f | Max temp: %5.01f\n", min_temp * 0.1, max_temp * 0.1);
+        Serial.printf("Min temp: %5.01f | Max temp: %5.01f\n", min_temp, max_temp);
     }
     Serial.println("-----------------------------------------");
     return 1;
