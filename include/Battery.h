@@ -78,6 +78,7 @@ public:
     float icTemp[10];
     float balTemp[140]; 
     float cellSOC[140];
+    uint8_t cellBalancing[140];
     
     Battery();
     void init();
@@ -96,7 +97,7 @@ public:
     void checkFuse();
     bool checkStatus();
 
-    void toggleCellBalancing(bool enable);
+    void toggleCellBalancing(bool all, bool enable, bcc_cid_t cid, uint8_t cellIndex);
     void printDeviceMeasurements();
     void init_registers();
 };

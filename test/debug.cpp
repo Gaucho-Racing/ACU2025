@@ -110,23 +110,91 @@ int debug(Battery *bty){
     return 0;
 }
 
-// Cell Balancing - Active
+// Cell Balancing - Turn Off
 /************** INFO **************
- * Actively redistributes charge among
- * cells to ensure uniform charge levels.
+ * Ensures that cell balancing turns off
+ * and this state is reflected in properties
  **********************************/  
+int cell_balancing_deactivate_test(Battery *bty){
+    Serial.println("Turn off all cell balancing...");
 
-// Cell Balancing - Passive
-/************** INFO **************
- * Uses resistors to dissipate 
- * excess energy from overcharged cells.
- **********************************/ 
+    uint8_t count = 0;
+    uint8_t invalid_count = 0;
+    bty->toggleCellBalancing(true, false, BCC_CID_UNASSIG, 0);
+    Serial.println("Cell Balancing Status: ------------------------------");
+    for(int i = 0; i < (NUM_TOTAL_IC); i++){
+        
+        Serial.printf("Row %d => ", i);
+        for (int j = 0; j < NUM_CELL_IC; j++){
+            
+            Serial.printf("[Cell %d: ", j);
 
-// Cell Balancing - Passive
+            if(bty->cellBalancing[i] == 0){
+                Serial.printf("%d | Off] ", bty->cellBalancing[i]);
+
+            } else if (bty->balTemp[i] == 255){
+                Serial.printf("%d | On] ", bty->cellBalancing[i]);
+                count++;
+            }
+            else{
+                Serial.printf("%d | Invalid] ", bty->cellBalancing[i]);
+                invalid_count++;
+            }
+        }
+        Serial.println();
+        Serial.printf("On count: %d | Off count: %d | Invalid count: %d\n",
+            count, (NUM_TOTAL_IC*NUM_CELL_IC - count - invalid_count), invalid_count);
+    }
+    Serial.println("-----------------------------------------");
+    return 1;
+}
+
+// Cell Balancing - Turn On
 /************** INFO **************
- * Uses resistors to dissipate 
- * excess energy from overcharged cells.
- **********************************/ 
+ * Ensures that cell balancing turns on
+ * and this state is reflected in properties
+ **********************************/  
+int cell_balancing_activate_test(Battery *bty){
+    Serial.println("Turn on cell balancing...");
+
+    uint8_t count = 0;
+    uint8_t invalid_count = 0;
+    bty->toggleCellBalancing(true, false, BCC_CID_UNASSIG, 0);
+    Serial.println("Cell Balancing Status: ------------------------------");
+    for(int i = 0; i < (NUM_TOTAL_IC); i++){
+        
+        Serial.printf("Row %d => ", i);
+        for (int j = 0; j < NUM_CELL_IC; j++){
+            
+            Serial.printf("[Cell %d: ", j);
+
+            if(bty->cellBalancing[i] == 0){
+                Serial.printf("%d | Off] ", bty->cellBalancing[i]);
+                count++;
+
+            } else if (bty->balTemp[i] == 255){
+                Serial.printf("%d | On] ", bty->cellBalancing[i]);
+            }
+            else{
+                Serial.printf("%d | Invalid] ", bty->cellBalancing[i]);
+                invalid_count++;
+            }
+        }
+        Serial.println();
+        Serial.printf("On count: %d | Off count: %d | Invalid count: %d\n",
+            (NUM_TOTAL_IC*NUM_CELL_IC - count - invalid_count), count, invalid_count);
+    }
+    
+    Serial.println("- - - - - - - - - - - - - - - - - - - - -");
+    
+    Serial.println("Running voltage measurement test, expect no OV/UV issues");
+    BCC_MCU_WaitUs(500);
+    voltage_measurement_test(bty);
+
+    Serial.println("-----------------------------------------");
+
+    return 1;
+}
 
 // Overcharge Protection
 /************** INFO **************

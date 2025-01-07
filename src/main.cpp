@@ -30,8 +30,6 @@ volatile int spiRxComplete = 0; // Flag to indicate if SPI reception is complete
 // BCC MCU timeout thingy
 uint32_t BCC_MCU_Timeout_Start;
 
-void nop(bcc_drv_config_t * const drvConfig);
-
 void setup() {
   Serial.begin(1000000);
 
@@ -76,7 +74,6 @@ void setup() {
 uint32_t prev_mill = 0;
 void loop() {
   // Serial.print("Please work\n");
-  // nop(&(battery->drvConfig));
   // put your main code here, to run repeatedly:
   switch (state)
   {
@@ -106,7 +103,6 @@ void loop() {
   }
     
   battery->readDeviceMeasurements();
-  // nop(&(battery->drvConfig));
   bccError = BCC_Sleep(&(battery->drvConfig));
   delay(200);
   BCC_WakeUp(&(battery->drvConfig));
@@ -117,11 +113,4 @@ void loop() {
       debug(battery);
     }
   #endif
-}
-
-void nop(bcc_drv_config_t * const drvConfig) {
-    for (uint8_t cid = 1; cid <= drvConfig->devicesCnt; cid++) {
-        bcc_cid_t chosen = (bcc_cid_t)cid;
-        BCC_SendNop(drvConfig, chosen);
-    }
 }

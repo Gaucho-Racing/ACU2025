@@ -27,19 +27,38 @@ void clear_faults(bcc_drv_config_t * drvConfig)
 
 Battery::Battery(){}
 
-void Battery::toggleCellBalancing(bool enable){
+/// @brief manages cell balancing, can set in bulk OR set individual cells based on parameters
+/// @param all true if we want to update cell balancing for all cells
+/// @param enable true if we ewant to start cell balancing
+/// @param cid optional parameters for IC #
+/// @param cellIndex optional paramaeter for cluster id
+void Battery::toggleCellBalancing(bool all, bool enable, bcc_cid_t cid, uint8_t cellIndex){
     //turn on/off balancing
-    for(uint8_t i = 0; i < NUM_TOTAL_IC; i++){
-        bcc_cid_t cid = bcc_cid_t(i+1);
-        if(enable) {
-            bcc_status_t status = BCC_CB_Enable(&drvConfig, cid, 1);
-            Serial.print("Enable cell balancing: "); print_bcc_status(status);
+    if(all){
+        for(uint8_t i = 0; i < NUM_TOTAL_IC; i++)
+        {
+            for(uint8_t j = 0; j < NUM_CELL_IC; j++)
+            {
+                bcc_status_t status = BCC_CB_SetIndividual(&drvConfig, (bcc_cid_t)i,  j, enable, 0);
+                
+                if(status != BCC_STATUS_SUCCESS) {
+                    print_bcc_status(status);
+                    return;
+                }
+                this->cellBalancing[i*j+j] = enable == true ? 255 : 0;
+            }
         }
-        else {
-            bcc_status_t status = BCC_CB_Pause(&drvConfig, cid, 1);
-            Serial.print("Disable cell balancing: "); print_bcc_status(status);
-        }
+        return;
     }
+
+    bcc_status_t status = BCC_CB_SetIndividual(&drvConfig, cid, cellIndex, enable, 0);
+                
+    if(status != BCC_STATUS_SUCCESS) {
+        print_bcc_status(status);
+        return;
+    }
+
+    this->cellBalancing[(uint8_t)cid*cellIndex+cellIndex] = enable == true ? 255 : 0;
 }
 
 void Battery::init(){
@@ -51,7 +70,7 @@ void Battery::init(){
     clear_faults(&drvConfig);
 
     // disable cell balancing first
-    toggleCellBalancing(0);
+    toggleCellBalancing(true, false, BCC_CID_UNASSIG, 0);
 
     readDeviceMeasurements();
     BCC_MCU_WaitUs(500);
@@ -79,7 +98,7 @@ void Battery::init(){
     }
 
     // enable cell balancing
-    //toggleCellBalancing(1);
+    // toggleCellBalancing(true, true, BCC_CID_UNASSIG, 0);
     return;
 }
 
@@ -88,22 +107,20 @@ void Battery::readDeviceMeasurements() {
     
     uint32_t measurements[NUM_CELL_IC];
     int16_t temp_measures[NUM_CELL_IC];
-    // int16_t temps[1];
     bcc_status_t error;
 
-    //toggleCellBalancing(0);
+    // pauseCellBalancing(true, false, BCC_CID_UNASSIG, 0);
     bzero(measurements, NUM_CELL_IC);
     // bzero(temps, 1);
 
     for(uint8_t i = 0; i < NUM_TOTAL_IC; i++){
 
         if(true){ // get cell & stack voltage
-            //Serial.print("GetCellVoltage: "); 
             BCC_Meas_StartAndWait(&drvConfig, bcc_cid_t(i+1), BCC_AVG_1);
             error = BCC_Meas_GetCellVoltages(&drvConfig, bcc_cid_t(i+1), measurements);
             if(error != BCC_STATUS_SUCCESS){
                 // this->state = SHUTDOWN;
-                //toggleCellBalancing(&drvConfig);
+                //toggleCellBalancing(true, false, BCC_CID_UNASSIG, 0);
                 return;
             }
             //print_bcc_status(error);
@@ -112,12 +129,11 @@ void Battery::readDeviceMeasurements() {
                 this->cellVoltage[i*NUM_CELL_IC + j] = measurements[j] * 1e-6f;
             }
 
-            //Serial.print("GetStackVoltage: "); 
             bzero(measurements, NUM_TOTAL_IC);
             error = BCC_Meas_GetStackVoltage(&drvConfig, bcc_cid_t(i+1), measurements);
             if(error != BCC_STATUS_SUCCESS){
                 // this->state = SHUTDOWN;
-                //toggleCellBalancing(&drvConfig);
+                //toggleCellBalancing(true, false, BCC_CID_UNASSIG, 0);
                 return;
             }
             //print_bcc_status(error);
@@ -128,9 +144,7 @@ void Battery::readDeviceMeasurements() {
             //Serial.print("GetIcTemperature: "); 
             bzero(temp_measures, NUM_CELL_IC);
             error = BCC_Meas_GetIcTemperature(&drvConfig, bcc_cid_t(i+1), BCC_TEMP_CELSIUS, temp_measures);
-            //print_bcc_status(error);
             this->icTemp[i] = temp_measures[i] * 0.1f; // when printing make sure to multiply by 0.1
-            // bzero(temps, 1);
         }
 
         if(true){
@@ -143,7 +157,7 @@ void Battery::readDeviceMeasurements() {
             }
         }
     }
-    //toggleCellBalancing(0);
+    //toggleCellBalancing(true, false, BCC_CID_UNASSIG, 0);
     return;
 }
 
