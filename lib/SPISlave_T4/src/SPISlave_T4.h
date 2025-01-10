@@ -1,9 +1,11 @@
 #if !defined(_SPISlave_T4_H_)
 #define _SPISlave_T4_H_
 
-#include <Arduino.h>
-#include <circular_buffer.h>
+#include "Arduino.h"
+#include "circular_buffer.h"
 #include <SPI.h>
+
+extern void lpspi4_slave_isr();
 
 typedef enum SPI_BITS {
   SPI_8_BITS = 8,

@@ -1,82 +1,153 @@
 #include <Arduino.h>
-#include <SPI.h>
-#include "bcc.h"
-#include "SPISlave_T4.h" // hope this thing works
 #include "pins.h"
+#include "config.h"
+#include "states.h"
+#include "Battery.h"
+#include "mcu_wrapper.h"
+#include "bcc.h"
+#include "SPISlave_T4.h"
+#include "debug.h"
 
+#define DEBUG
 
+// Battery
+Battery* battery = new Battery;
+bcc_status_t bccError;
+bcc_drv_data_t drv_data; // contains cellMap, rxBuf, msgCenter
+bool bccInitialized = false; 
+bool loopBackOk = true; 
+
+// State
+States state;
+
+// SPI
 SPIClass* BCC_TX_SPI = &SPI1;
-SPISlave_T4<&SPI, SPI_8_BITS> BCC_RX_SPI;
-uint32_t spiRx[10];
-volatile int spiRxIdx;
-volatile int spiRxComplete = 0;
+SPISlave_T4<&SPI, SPI_8_BITS> BCC_RX_SPI; // 8-bit data mode
+uint32_t spiRx[10]; // Array to store received SPI data.
+volatile int spiRxIdx; //  Index for received SPI data
+volatile int spiRxComplete = 0; // Flag to indicate if SPI reception is complete
+
+// BCC MCU timeout thingy
+uint32_t BCC_MCU_Timeout_Start;
+
+void precharge(){
+
+}
+
+void standby(){
+    
+}
+
+bool systemCheck(){
+  Serial.println("Checking Battery...");
+  battery->check_acu();
+  battery->check_battery();
+  return true;
+  
+  /*
+  acu.checkACU(startup);
+
+  //D_L1("Checking Battery");
+
+  battery.checkBattery(fullCheck);
+
+  //D_L1("System Check Done");
+  //D_L1();
+
+  digitalWrite(PIN_AMS_OK, (acu.errs & ERR_OverTemp) == 0);
+  return acu.errs != 0;
+  */
+
+}
+
+void shutdown(bool randomBoolean){
+  Serial.println("Shutting down cell balancing...");
+  battery->toggleCellBalancing(true, false, BCC_CID_UNASSIG, 0);
+  // set TS inactive
+}
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(1000000);
-  BCC_TX_SPI->begin();
-  BCC_RX_SPI.begin();
-}
 
-void loop() {
-  Serial.print("Please work\n");
-  // put your main code here, to run repeatedly:
-}
+  pinMode(PIN_BCC_TX_CS, OUTPUT);
+  pinMode(PIN_BCC_EN, OUTPUT);
+  pinMode(PIN_BCC_INT, INPUT);
+  digitalWrite(PIN_BCC_TX_CS, HIGH);
+  digitalWrite(PIN_BCC_EN, LOW);
 
-void BCC_MCU_WaitMs(uint16_t ms) {
-  delay(ms);
-}
+  Serial.println("Init SPIs");
+  BCC_TX_SPI->begin(); // init SPI bus for transmission
+  BCC_RX_SPI.begin(); // init the SPI bus for reception (slave mode)
 
-void BCC_MCU_WaitUs(uint32_t us) {
-  delayMicroseconds(us);
-}
-
-void BCC_MCU_Assert(bool x) {
-  if (!x) Serial.print("BCC assertion failed\n");
-}
-
-bcc_status_t BCC_MCU_TransferSpi(uint8_t drvInstance, uint8_t transBuf[], uint8_t recvBuf[]) {
-  // shouldn't be called (using Tpl mode), but written anyway
-  Serial.print("This shouldn't happen\n");
-  BCC_TX_SPI->transfer(transBuf, recvBuf, 5);
-  return BCC_STATUS_SUCCESS;
-}
-
-bcc_status_t BCC_MCU_TransferTpl(uint8_t drvInstance, uint8_t transBuf[], uint8_t recvBuf[], uint16_t recvTrCnt) {
-  Serial.printf("drvInstance %u transferTpl\n", drvInstance); // what does drvInstance do?
-  BCC_TX_SPI->transfer(transBuf, 5);
-  for (uint16_t rxCount = 0; rxCount < recvTrCnt; rxCount++) {
-    uint32_t startTime = millis();
-    while (!spiRxComplete) {
-      if (millis() - startTime > 10) {
-        Serial.printf("SPI RX frame %u Timeout\n", rxCount);
-        return BCC_STATUS_COM_TIMEOUT;
-      }
-    }
-    Serial.println(spiRxIdx);
-    for (uint8_t i = 0; i < spiRxIdx; i++) {
-      Serial.print(spiRx[i], HEX); Serial.print(" ");
-      recvBuf[rxCount*5 + i] = spiRx[i];
-    }
-    Serial.println();
-    spiRxComplete = 0;
-    spiRxIdx = 0;
+  // Initialize BCC functions
+  Serial.println("Init BCC functions");
+  battery->drvConfig.commMode = BCC_MODE_TPL;
+  battery->drvConfig.drvInstance = 0U;
+  battery->drvConfig.devicesCnt = NUM_TOTAL_IC;
+  Serial.println("Init devices");
+  for(uint8_t i = 0; i < NUM_TOTAL_IC; i++){
+      battery->drvConfig.device[i] = BCC_DEVICE_MC33771C;
+      battery->drvConfig.cellCnt[i] = NUM_CELL_IC;
   }
-  return BCC_STATUS_SUCCESS;
+  battery->drvConfig.loopBack = false;
+
+  state = STANDBY;
+  Serial.println("BCC_Init...");
+  bccError = BCC_Init(&(battery->drvConfig));
+  while (bccError != bcc_status_t::BCC_STATUS_SUCCESS){
+    Serial.print(" failed: ");
+    print_bcc_status(bccError);
+    delay(1000);
+    Serial.print("\n\n\n");
+    bccError = BCC_Init(&(battery->drvConfig));
+  }
+  Serial.println("success");
+
+  Serial.println("Battery init...");
+  battery->init();
 }
 
-void BCC_MCU_WriteCsbPin(uint8_t drvInstance, uint8_t value) {
-  digitalWriteFast(PIN_BCC_TX_CS, value);
-}
+uint32_t prev_mill = 0;
+void loop() {
+  // Serial.print("Please work\n");
+  // put your main code here, to run repeatedly:
+  switch (state)
+  {
+    case STANDBY:
+      // get tsCurrent();
+      // systemCheck();
+      break;
 
-void BCC_MCU_WriteRstPin(uint8_t drvInstance, uint8_t value) {
-  //digitalWriteFast(PIN_BCC_TX_RST, value);
-}
+    case PRECHARGE:
+      // preChargeState();
+      break;
 
-void BCC_MCU_WriteEnPin(uint8_t drvInstance, uint8_t value) {
-  digitalWriteFast(PIN_BCC_EN, value);
-}
+    case CHARGE:
+      // chargeState();
+      break;
 
-uint32_t BCC_MCU_ReadIntbPin(uint8_t drvInstance) {
-  return digitalReadFast(PIN_BCC_INT);
+    case DRIVE:
+      // driveState();
+      break;
+
+    case SHUTDOWN:
+      // shutdown(true);
+      break;
+
+    default:
+      state = SHUTDOWN;
+      break;
+  }
+    
+  battery->readDeviceMeasurements();
+  bccError = BCC_Sleep(&(battery->drvConfig));
+  delay(200);
+  BCC_WakeUp(&(battery->drvConfig));
+  
+  #ifdef DEBUG
+    if(millis() - prev_mill > 500){
+      prev_mill = millis();
+      debug(battery);
+    }
+  #endif
 }
