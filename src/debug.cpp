@@ -106,9 +106,66 @@ int ball_temp_measurement_test(Battery * bty){
     return 1;
 }
 
+// Cell Balancing Test
+/************** INFO **************
+ * Turns first cell's cell balancing on then off
+ * Test: Don't wanna turn too many off
+ **********************************/
+int turn_single_cell_balancing_on(Battery * bty){
+
+    Serial.println("Cell Balancing Test: ------------------------------");
+    
+    uint8_t count = 50;
+    bty->toggleCellBalancing(false, true, BCC_CID_DEV1, 0);
+    Serial.println("Turn on cell balancing for one cell");
+
+    while(count > 0){
+        uint8_t value = bty->cellBalancing[0];
+        bty->readDeviceMeasurements();
+        if(value == 0){
+            Serial.printf("[Cell %d | Off] ", value);
+
+        } else if (value == 255){
+            Serial.printf("[Cell %d | On] ", value);
+        }
+        else{
+            Serial.printf("[Cell %d | Invalid] ", value);
+        }
+        count--;
+        Serial.printf("Voltage: %5.03f, Temp: %5.03f\n", bty->cellVoltage[0], bty->cellTemp[0]);
+        delay(1000);
+    }
+
+    bty->toggleCellBalancing(false, false, BCC_CID_DEV1, 0);
+    Serial.println("Turn off cell balancing for one cell");
+
+    count = 50;
+    while(count > 0){
+        bty->readDeviceMeasurements();
+        uint8_t value = bty->cellBalancing[0];
+        if(value == 0){
+            Serial.printf("[Cell %d | Off] ", value);
+
+        } else if (value == 255){
+            Serial.printf("[Cell %d | On] ", value);
+        }
+        else{
+            Serial.printf("[Cell %d | Invalid] ", value);
+        }
+        count--;
+        Serial.printf("Voltage: %5.03f, Temp: %5.03f\n", bty->cellVoltage[0], bty->cellTemp[0]);
+        delay(1000);
+    }
+
+    
+    Serial.println("Cell Balancing Test Done: ------------------------------");
+    return 1;
+}
+
 int debug(Battery *bty){
     voltage_measurement_test(bty);
     temperature_measurement_test(bty);
+    turn_single_cell_balancing_on(bty);
     return 0;
 }
 

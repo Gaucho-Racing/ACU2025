@@ -50,7 +50,7 @@ void Battery::toggleCellBalancing(bool all, bool enable, bcc_cid_t cid, uint8_t 
         }
         return;
     }
-
+ 
     bcc_status_t status = BCC_CB_SetIndividual(&drvConfig, cid, cellIndex, enable, 0);
                 
     if(status != BCC_STATUS_SUCCESS) {
@@ -69,8 +69,16 @@ void Battery::init(){
     this->init_registers();
     clear_faults(&drvConfig);
 
-    // disable cell balancing first
-    toggleCellBalancing(true, false, BCC_CID_UNASSIG, 0);
+    // configure cell balancing
+    for(uint8_t i = 0; i < NUM_TOTAL_IC; i++)
+    {
+        bcc_status_t status = BCC_CB_Enable(&drvConfig, (bcc_cid_t)i,  true);
+            
+        if(status != BCC_STATUS_SUCCESS) {
+            print_bcc_status(status);
+            return;
+        }
+    }
 
     readDeviceMeasurements();
     BCC_MCU_WaitUs(500);
@@ -115,12 +123,12 @@ void Battery::readDeviceMeasurements() {
 
     for(uint8_t i = 0; i < NUM_TOTAL_IC; i++){
 
+        BCC_CB_Pause(&drvConfig, bcc_cid_t(i+1), true); // pause b4 read
         if(true){ // get cell & stack voltage
             BCC_Meas_StartAndWait(&drvConfig, bcc_cid_t(i+1), BCC_AVG_1);
             error = BCC_Meas_GetCellVoltages(&drvConfig, bcc_cid_t(i+1), measurements);
             if(error != BCC_STATUS_SUCCESS){
                 // this->state = SHUTDOWN;
-                //toggleCellBalancing(true, false, BCC_CID_UNASSIG, 0);
                 return;
             }
             //print_bcc_status(error);
@@ -133,7 +141,6 @@ void Battery::readDeviceMeasurements() {
             error = BCC_Meas_GetStackVoltage(&drvConfig, bcc_cid_t(i+1), measurements);
             if(error != BCC_STATUS_SUCCESS){
                 // this->state = SHUTDOWN;
-                //toggleCellBalancing(true, false, BCC_CID_UNASSIG, 0);
                 return;
             }
             //print_bcc_status(error);
@@ -148,14 +155,15 @@ void Battery::readDeviceMeasurements() {
         }
 
         if(true){
-            Serial.print("GetCellTemperature: ");
+            // Serial.print("GetCellTemperature: ");
             for(uint8_t j = 0; j < 32; j++) { // TODO: fix this loop
                 uint8_t readByte;
                 error = BCC_EEPROM_Read(&drvConfig, bcc_cid_t(i+1), j+1, &readByte);
-                Serial.print(readByte); print_bcc_status(error);
+                //Serial.print(readByte); print_bcc_status(error);
                 if (error == BCC_STATUS_SUCCESS) this->cellTemp[i*NUM_CELL_IC + j] = (float)readByte;
             }
         }
+        BCC_CB_Pause(&drvConfig, bcc_cid_t(i+1), false); // resume after read
     }
     //toggleCellBalancing(true, false, BCC_CID_UNASSIG, 0);
     return;

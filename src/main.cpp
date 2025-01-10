@@ -30,6 +30,42 @@ volatile int spiRxComplete = 0; // Flag to indicate if SPI reception is complete
 // BCC MCU timeout thingy
 uint32_t BCC_MCU_Timeout_Start;
 
+void precharge(){
+
+}
+
+void standby(){
+    
+}
+
+bool systemCheck(){
+  Serial.println("Checking Battery...");
+  battery->check_acu();
+  battery->check_battery();
+  return true;
+  
+  /*
+  acu.checkACU(startup);
+
+  //D_L1("Checking Battery");
+
+  battery.checkBattery(fullCheck);
+
+  //D_L1("System Check Done");
+  //D_L1();
+
+  digitalWrite(PIN_AMS_OK, (acu.errs & ERR_OverTemp) == 0);
+  return acu.errs != 0;
+  */
+
+}
+
+void shutdown(bool randomBoolean){
+  Serial.println("Shutting down cell balancing...");
+  battery->toggleCellBalancing(true, false, BCC_CID_UNASSIG, 0);
+  // set TS inactive
+}
+
 void setup() {
   Serial.begin(1000000);
 
@@ -78,7 +114,8 @@ void loop() {
   switch (state)
   {
     case STANDBY:
-      
+      // get tsCurrent();
+      // systemCheck();
       break;
 
     case PRECHARGE:
@@ -94,7 +131,7 @@ void loop() {
       break;
 
     case SHUTDOWN:
-      // shutdownState();
+      // shutdown(true);
       break;
 
     default:
