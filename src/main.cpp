@@ -62,7 +62,7 @@ bool systemCheck(){
 
 void shutdown(bool randomBoolean){
   Serial.println("Shutting down cell balancing...");
-  battery->toggleCellBalancing(true, false, BCC_CID_UNASSIG, 0);
+  battery->toggleCellBalancing(true, false, BCC_CID_DEV1, 0);
   // set TS inactive
 }
 

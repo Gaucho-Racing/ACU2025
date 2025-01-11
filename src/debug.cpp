@@ -117,6 +117,8 @@ int turn_single_cell_balancing_on(Battery * bty){
     
     uint8_t count = 50;
     bty->toggleCellBalancing(false, true, BCC_CID_DEV1, 0);
+    BCC_MCU_WaitMs(3);
+
     Serial.println("Turn on cell balancing for one cell");
 
     while(count > 0){
@@ -137,6 +139,8 @@ int turn_single_cell_balancing_on(Battery * bty){
     }
 
     bty->toggleCellBalancing(false, false, BCC_CID_DEV1, 0);
+    BCC_MCU_WaitMs(3);
+    
     Serial.println("Turn off cell balancing for one cell");
 
     count = 50;

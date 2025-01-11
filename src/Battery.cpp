@@ -35,11 +35,11 @@ Battery::Battery(){}
 void Battery::toggleCellBalancing(bool all, bool enable, bcc_cid_t cid, uint8_t cellIndex){
     //turn on/off balancing
     if(all){
-        for(uint8_t i = 0; i < NUM_TOTAL_IC; i++)
+        for(uint8_t i = 0; i < NUM_TOTAL_IC; i++) // should be 1 right now
         {
-            for(uint8_t j = 0; j < NUM_CELL_IC; j++)
+            for(uint8_t j = 0; j < NUM_CELL_IC; j++) // should be 14 right now
             {
-                bcc_status_t status = BCC_CB_SetIndividual(&drvConfig, (bcc_cid_t)i,  j, enable, 0);
+                bcc_status_t status = BCC_CB_SetIndividual(&drvConfig, (bcc_cid_t)i+1,  j, enable, 0);
                 
                 if(status != BCC_STATUS_SUCCESS) {
                     print_bcc_status(status);
@@ -50,7 +50,11 @@ void Battery::toggleCellBalancing(bool all, bool enable, bcc_cid_t cid, uint8_t 
         }
         return;
     }
- 
+    
+    if(cellIndex >= NUM_CELL_IC){
+        Serial.println("Invalid cell index");
+        return;
+    }
     bcc_status_t status = BCC_CB_SetIndividual(&drvConfig, cid, cellIndex, enable, 0);
                 
     if(status != BCC_STATUS_SUCCESS) {
@@ -72,7 +76,7 @@ void Battery::init(){
     // configure cell balancing
     for(uint8_t i = 0; i < NUM_TOTAL_IC; i++)
     {
-        bcc_status_t status = BCC_CB_Enable(&drvConfig, (bcc_cid_t)i,  true);
+        bcc_status_t status = BCC_CB_Enable(&drvConfig, (bcc_cid_t)i+1,  true);
             
         if(status != BCC_STATUS_SUCCESS) {
             print_bcc_status(status);

@@ -12,7 +12,7 @@
 #define INIT_REG_CNT 45
 #define GPIO_CFG1 0.0
 #define GPIO_CFG2 0.0
-#define CBX_CFG 0.0
+#define CBX_SET 1.0
 #define RX_BUF_SIZE 8
 
 #define CELL_MIN_TEMP 0.0 // to set later => when printing multiply by 0.1 to get Celcius
