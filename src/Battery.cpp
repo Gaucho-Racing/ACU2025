@@ -33,6 +33,7 @@ Battery::Battery(){}
 /// @param cid optional parameters for IC #
 /// @param cellIndex optional paramaeter for cluster id
 void Battery::toggleCellBalancing(bool all, bool enable, bcc_cid_t cid, uint8_t cellIndex){
+
     //turn on/off balancing
     if(all){
         for(uint8_t i = 0; i < NUM_TOTAL_IC; i++) // should be 1 right now

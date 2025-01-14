@@ -109,17 +109,15 @@ int ball_temp_measurement_test(Battery * bty){
 // Cell Balancing Test
 /************** INFO **************
  * Turns first cell's cell balancing on then off
- * Test: Don't wanna turn too many off
+ * Test: Off and on should result in different voltage readings
  **********************************/
-int turn_single_cell_balancing_on(Battery * bty){
-
-    Serial.println("Cell Balancing Test: ------------------------------");
+int cell_balancing_test_single(Battery * bty){
+    Serial.println("\n\n-----------------------------------------");
+    Serial.println("Cell Balancing Test:\n");
     
-    uint8_t count = 50;
-    bty->toggleCellBalancing(false, true, BCC_CID_DEV1, 0);
-    BCC_MCU_WaitMs(3);
-
-    Serial.println("Turn on cell balancing for one cell");
+    uint8_t count = 30;
+    Serial.println("Test starting. Current CB off for all cells");
+    
 
     while(count > 0){
         uint8_t value = bty->cellBalancing[0];
@@ -136,40 +134,78 @@ int turn_single_cell_balancing_on(Battery * bty){
         count--;
         Serial.printf("Voltage: %5.03f, Temp: %5.03f\n", bty->cellVoltage[0], bty->cellTemp[0]);
         delay(1000);
+
+        if(count == 20){
+            Serial.println("Turn on cell balancing @ t = 10 seconds. Voltage should drop");
+            bty->toggleCellBalancing(false, true, BCC_CID_DEV1, 0);
+            // BCC_MCU_WaitMs(3); ==> not required, but when we read immediately there is a bit of a delayed reaction
+        }
+        else if(count == 10){
+            Serial.println("Turn off cell balancing @ t = 20 seconds. Voltage should go back");
+            bty->toggleCellBalancing(false, false, BCC_CID_DEV1, 0);
+            // BCC_MCU_WaitMs(3); ==> not required, but when we read immediately there is a bit of a delayed reaction
+        }
     }
 
-    bty->toggleCellBalancing(false, false, BCC_CID_DEV1, 0);
-    BCC_MCU_WaitMs(3);
-    
-    Serial.println("Turn off cell balancing for one cell");
+    Serial.println("Test completed. All CB off for all cells");
 
-    count = 50;
+    Serial.println("\nCell Balancing Test Done...");
+    Serial.println("-----------------------------------------\n\n");
+    return 1;
+}
+
+// Cell Balancing Test
+/************** INFO **************
+ * Turns a few cells on and off
+ * Test: consistent results in voltage reading
+ **********************************/
+int cell_balancing_test_multiple(Battery * bty){
+    Serial.println("\n\n-----------------------------------------");
+    Serial.println("Multiple Cell Balancing Test:\n");
+    
+    // We choose to turn cell balancing on for all cells in IC 1
+    uint8_t count = 30;
+    Serial.println("Test starting. Current CB off for all cells");
+    
     while(count > 0){
         bty->readDeviceMeasurements();
-        uint8_t value = bty->cellBalancing[0];
-        if(value == 0){
-            Serial.printf("[Cell %d | Off] ", value);
-
-        } else if (value == 255){
-            Serial.printf("[Cell %d | On] ", value);
+        for(uint8_t num = 0; num < NUM_CELL_IC; num++){
+            Serial.printf("CELL %d; V: %5.03f,T: %5.03f | ", num+1, bty->cellVoltage[num], bty->cellTemp[num]);
+            if ((num+1) % 4 == 0){
+                Serial.print('\n');
+            }
         }
-        else{
-            Serial.printf("[Cell %d | Invalid] ", value);
+
+        if(count == 20){
+            Serial.println("Turn on cell balancing @ t = 10 seconds. Voltage should drop");
+            for(uint8_t num = 0; num < NUM_CELL_IC; num++){
+                bty->toggleCellBalancing(false, true, BCC_CID_DEV1, num);
+            }
+            // BCC_MCU_WaitMs(3);
+        }
+        else if(count == 10){
+            Serial.println("Turn off cell balancing @ t = 20 seconds. Voltage should go back");
+            for(uint8_t num = 0; num < NUM_CELL_IC; num++){
+                bty->toggleCellBalancing(false, false, BCC_CID_DEV1, num);
+            }
+            // BCC_MCU_WaitMs(3);
         }
         count--;
-        Serial.printf("Voltage: %5.03f, Temp: %5.03f\n", bty->cellVoltage[0], bty->cellTemp[0]);
         delay(1000);
     }
 
-    
-    Serial.println("Cell Balancing Test Done: ------------------------------");
+    Serial.println("Test completed. All CB off for all cells");
+
+    Serial.println("\nCell Balancing Test Done...");
+    Serial.println("-----------------------------------------\n\n");
     return 1;
 }
 
 int debug(Battery *bty){
     voltage_measurement_test(bty);
     temperature_measurement_test(bty);
-    turn_single_cell_balancing_on(bty);
+    cell_balancing_test_single(bty);
+    cell_balancing_test_multiple(bty);
     return 0;
 }
 
